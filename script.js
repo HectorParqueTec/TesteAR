@@ -1,7 +1,7 @@
 async function activateXR() {
     const canvas = document.createElement("canvas");
     document.body.appendChild(canvas);
-    const gl = canvas.getContext("webgl", {XRCompatible: true})
+    const gl = canvas.getContext("webgl", {xrCompatible: true})
 
 
     const scene = new THREE.Scene();
