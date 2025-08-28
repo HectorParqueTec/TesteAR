@@ -1,80 +1,148 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <script src="https://unpkg.com/three@0.126.0/build/three.js"></script>
-    <title>Teste AR</title>
+    <title>WebXR com Three.js - Realidade Aumentada</title>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.126.0/build/three.min.js"></script>
 </head>
 <body>
-  <p1>Welcome!</p1>
-  <button onclick="activateXR()"></button>
-  <script>
-    async function activateXR() {
-      const canvas = document.createElement("canvas");
-      document.body.appendChild(canvas);
-      const gl = canvas.getContext("webgl", {xrCompatible: true})
+    <div id="container">
+        <h1>Experiência de Realidade Aumentada</h1>
+        <p>Visualize um cubo 3D em RA usando WebXR e Three.js</p>
+        
+        <div id="status">Verificando compatibilidade com WebXR...</div>
+        <button id="ar-button" onclick="activateXR()" disabled>IniciAR Experiência</button>
+        
+        <div id="compatibility-info">
+            <h3>Requisitos para funcionar:</h3>
+            <ul>
+                <li>Navegador compatível com WebXR (Chrome para Android, Safari para iOS)</li>
+                <li>Dispositivo com suporte a ARCore (Android) ou ARKit (iOS)</li>
+                <li>Conexão HTTPS (obrigatório para WebXR)</li>
+                <li>Permissão para usar a câmera</li>
+            </ul>
+        </div>
+    </div>
 
+    <script>
+        // Verificar compatibilidade com WebXR
+        async function checkXRSupport() {
+            const statusElement = document.getElementById('status');
+            const arButton = document.getElementById('ar-button');
+            
+            // Verificar se o navegador suporta WebXR
+            if (!navigator.xr) {
+                statusElement.innerHTML = "Seu navegador não suporta WebXR. Tente usar Chrome no Android ou Safari no iOS.";
+                return;
+            }
+            
+            // Verificar se o modo 'immersive-ar' é suportado
+            try {
+                const supported = await navigator.xr.isSessionSupported('immersive-ar');
+                
+                if (supported) {
+                    statusElement.innerHTML = "WebXR AR é suportado! Clique no botão para iniciar.";
+                    arButton.disabled = false;
+                } else {
+                    statusElement.innerHTML = "WebXR AR não é suportado neste dispositivo.";
+                }
+            } catch (error) {
+                statusElement.innerHTML = "Erro ao verificar suporte WebXR: " + error.message;
+                console.error("WebXR support check failed:", error);
+            }
+        }
+        
+        // Ativar a experiência de RA
+        async function activateXR() {
+            const statusElement = document.getElementById('status');
+            const arButton = document.getElementById('ar-button');
+            
+            try {
+                statusElement.innerHTML = "Iniciando experiência de RA...";
+                arButton.disabled = true;
+                
+                // Criar canvas e contexto WebGL
+                const canvas = document.createElement("canvas");
+                document.body.appendChild(canvas);
+                const gl = canvas.getContext("webgl", {xrCompatible: true});
 
-      const scene = new THREE.Scene();
-      const geometry = new THREE.BoxGeometry(1,1,1);
-      const material = new THREE.MeshBasicMaterial({color: 0x00ff00});
-      const cube = new THREE.Mesh(geometry, material);
+                // Configurar a cena Three.js
+                const scene = new THREE.Scene();
+                
+                // Adicionar uma luz para melhor visualização
+                const light = new THREE.DirectionalLight(0xffffff, 1);
+                light.position.set(1, 1, 1);
+                scene.add(light);
+                
+                // Criar o cubo 3D
+                const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x00ff00,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.set(0, 0, -0.5);
+                scene.add(cube);
 
-      cube.position.set (1, 0, 1);
-      scene.add(cube);
+                // Configurar a câmera
+                const camera = new THREE.PerspectiveCamera();
+                camera.matrixAutoUpdate = false;
+                
+                // Configurar o renderizador
+                const renderer = new THREE.WebGLRenderer({
+                    alpha: true,
+                    preserveDrawingBuffer: true,
+                    canvas: canvas,
+                    context: gl
+                });
+                renderer.autoClear = false;
 
-      const camera = new THREE.PerspectiveCamera();
-      camera.matrixAutoUpdate = false;
-      const renderer = new THREE.WebGLRenderer({
-          alpha: true,
-          preserveDrawingBuffer: true,
-          canvas: canvas,
-          context: gl
-      });
-      renderer.autoClear = false;
-      // renderer.setSize( window.innerWidth, window.innerHeight );
-      // document.body.appendChild( renderer.domElement );
+                // Solicitar sessão WebXR
+                const session = await navigator.xr.requestSession("immersive-ar");
+                session.updateRenderState({
+                    baseLayer: new XRWebGLLayer(session, gl)
+                });
+                
+                const referenceSpace = await session.requestReferenceSpace('local');
+                
+                statusElement.innerHTML = "Experiência de RA ativa! Use o dispositivo para visualizar o cubo.";
+                
+                // Configurar o loop de renderização
+                const onXRFrame = (time, frame) => {
+                    session.requestAnimationFrame(onXRFrame);
+                    
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, session.renderState.baseLayer.framebuffer);
+                    
+                    const pose = frame.getViewerPose(referenceSpace);
+                    if (pose) {
+                        const view = pose.views[0];
+                        
+                        // Correção: fromArray em vez de fronArray
+                        camera.matrix.fromArray(view.transform.matrix);
+                        camera.projectionMatrix.fromArray(view.projectionMatrix);
+                        camera.updateMatrixWorld(true);
 
-      // camera.position.z = 5;
-      scene.add( cube );
+                        // Animação do cubo
+                        cube.rotation.x += 0.01;
+                        cube.rotation.y += 0.01;
 
-      function animate() {
-      renderer.render( scene, camera );
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
-      }
-      renderer.setAnimationLoop( animate );
-
-      
-      const session = await navigator.xr.requestSession("immersive-ar");
-      session.updateRenderState({
-          baseLayer: new XRWebGLLayer(session, gl)
-      });
-      
-      const referenceSpace = await session.requestReferenceSpace('local');
-      
-      /////////////////////////////////////////////////////////////////////////////////////////////////////
-      // Este trecho cria um loop para atualizar constantemente a perspectiva da câmera 
-
-      const onXRFrame = (time, frame) => {
-          session.requestAnimationFrame(onXRFrame);
-          gl.bindFramebuffer(gl.FRAMEBUFFER, session.renderState.baseLayer.framebuffer)
-          const pose = frame.getViewerPose(referenceSpace);
-          if (pose) {
-              const view = pose.views[0];
-              const viewport = session.renderState.baseLayer.getViewPort(view);
-              renderer.setSize(viewport.width, viewport.height)
-
-              camera.matrix.fromArray(view.transform.matrix)
-              camera.projectionMatrix.fronArray(view.projectionMatrix);
-              camera.updateMatrixWorld(true);
-
-              renderer.render(scene, camera);
-          }
-      }
-      session.requestAnimationFrame(onXRFrame);
-    }
-  </script>
+                        renderer.render(scene, camera);
+                    }
+                };
+                
+                session.requestAnimationFrame(onXRFrame);
+                
+            } catch (error) {
+                statusElement.innerHTML = "Erro ao ativar WebXR: " + error.message;
+                console.error("WebXR activation failed:", error);
+                arButton.disabled = false;
+            }
+        }
+        
+        // Verificar suporte ao carregar a página
+        window.addEventListener('load', checkXRSupport);
+    </script>
 </body>
 </html>
