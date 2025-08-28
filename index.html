@@ -61,8 +61,6 @@
         const pose = frame.getViewerPose(referenceSpace);
         if (pose) {
             const view = pose.views[0];
-            const viewport = session.renderState.baseLayer.getViewPort(view);
-            renderer.setSize(viewport.width, viewport.height);
 
             camera.matrix.fromArray(view.transform.matrix);
             camera.projectionMatrix.fromArray(view.projectionMatrix);
