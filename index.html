@@ -44,6 +44,8 @@
         canvas: canvas,
         context: gl
     });
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
     renderer.autoClear = false;
     
     const session = await navigator.xr.requestSession("immersive-ar");
