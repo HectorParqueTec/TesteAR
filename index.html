@@ -17,18 +17,21 @@
     const gl = canvas.getContext("webgl", {xrCompatible: true});
     const scene = new THREE.Scene();
 
+    /////////////////////////////////////////////ILUMINAÇÃO/////////////////////////////////////////////
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(1, 1, 1);
+    scene.add(light);
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //////////////////////////////////////CONFIGURAÇÕES DO CUBO/////////////////////////////////////////
     const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-    const materials = [
-      new THREE.MeshBasicMaterial({color: 0xff0000}),
-      new THREE.MeshBasicMaterial({color: 0x0000ff}),
-      new THREE.MeshBasicMaterial({color: 0x00ff00}),
-      new THREE.MeshBasicMaterial({color: 0xff00ff}),
-      new THREE.MeshBasicMaterial({color: 0x00ffff}),
-      new THREE.MeshBasicMaterial({color: 0xffff00})
-    ];
-    const cube = new THREE.Mesh(geometry, materials);
-    cube.position.set (0, 0, -0.5);
+    const material = new THREE.MeshPhongMaterial({
+        color: 0x00ff00,
+        transparent: true,
+        opacity: 0.8
+    });
+    const cube = new THREE.Mesh(geometry, material);
+    cube.position.set(0, 0, -0.5);
     scene.add(cube);
     /////////////////////////////////////////////////////////////////////////////////////////////////////
 
