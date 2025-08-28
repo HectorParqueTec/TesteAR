@@ -26,15 +26,7 @@ async function activateXR() {
     // document.body.appendChild( renderer.domElement );
 
     // camera.position.z = 5;
-    scene.add( cube );
-
-    function animate() {
-    renderer.render( scene, camera );
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
-    }
-    renderer.setAnimationLoop( animate );
-
+    
     
     const session = await navigator.xr.requestSession("immersive-ar");
     session.updateRenderState({
@@ -45,22 +37,33 @@ async function activateXR() {
     
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     // Este trecho cria um loop para atualizar constantemente a perspectiva da câmera 
-
+    
     const onXRFrame = (time, frame) => {
         session.requestAnimationFrame(onXRFrame);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, session.renderState.baseLayer.framebuffer)
+        gl.bindFramebuffer(gl.FRAMEBUFFER, session.renderState.baseLayer.framebuffer);
         const pose = frame.getViewerPose(referenceSpace);
         if (pose) {
             const view = pose.views[0];
             const viewport = session.renderState.baseLayer.getViewPort(view);
-            renderer.setSize(viewport.width, viewport.height)
+            renderer.setSize(viewport.width, viewport.height);
 
-            camera.matrix.fromArray(view.transform.matrix)
-            camera.projectionMatrix.fronArray(view.projectionMatrix);
+            camera.matrix.fromArray(view.transform.matrix);
+            camera.projectionMatrix.fromArray(view.projectionMatrix);
             camera.updateMatrixWorld(true);
-
+            
             renderer.render(scene, camera);
         }
     }
     session.requestAnimationFrame(onXRFrame);
+    
+    scene.add( cube );
+
+    function animate() {
+    renderer.render( scene, camera );
+    cube.rotation.x += 0.01;
+    cube.rotation.y += 0.01;
+    }
+    renderer.setAnimationLoop( animate );
+
+    window.addEventListener('load', checkXRSupport);
 }
